@@ -19,13 +19,22 @@ export function DbStatus() {
 
   const fetchDatabaseStatus = async () => {
     try {
-      const response = await fetch('/api/db-status');
+      const response = await fetch('/api/db-status', {
+        headers: {
+          'Accept': 'application/json',
+          'Content-Type': 'application/json',
+        },
+      });
+      
       if (!response.ok) {
-        throw new Error('Failed to fetch database status');
+        const errorData = await response.json().catch(() => null);
+        throw new Error(errorData?.error || `HTTP error! status: ${response.status}`);
       }
+      
       const data = await response.json();
       setTables(data.tables.map((t: any) => ({ ...t, isExpanded: false })));
     } catch (err) {
+      console.error('Error fetching database status:', err);
       setError(err instanceof Error ? err.message : 'An error occurred');
     } finally {
       setLoading(false);
@@ -52,13 +61,27 @@ export function DbStatus() {
     return (
       <div className="bg-red-50 p-4 rounded-lg">
         <p className="text-red-700">Error: {error}</p>
+        <button 
+          onClick={fetchDatabaseStatus}
+          className="mt-4 px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700"
+        >
+          Retry
+        </button>
       </div>
     );
   }
 
   return (
     <div className="max-w-7xl mx-auto py-8">
-      <h1 className="text-3xl font-bold text-gray-900 mb-8">Database Status</h1>
+      <div className="flex justify-between items-center mb-8">
+        <h1 className="text-3xl font-bold text-gray-900">Database Status</h1>
+        <button
+          onClick={fetchDatabaseStatus}
+          className="px-4 py-2 bg-indigo-600 text-white rounded hover:bg-indigo-700"
+        >
+          Refresh
+        </button>
+      </div>
 
       <div className="space-y-6">
         {tables.map((table, index) => (
@@ -95,7 +118,7 @@ export function DbStatus() {
                   </thead>
                   <tbody className="bg-white divide-y divide-gray-200">
                     {table.data.map((row, rowIndex) => (
-                      <tr key={rowIndex}>
+                      <tr key={rowIndex} className="hover:bg-gray-50">
                         {Object.entries(row).map(([key, value]) => (
                           <td
                             key={key}

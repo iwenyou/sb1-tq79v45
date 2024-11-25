@@ -32,13 +32,21 @@ app.use('/api/catalog', catalogRouter);
 app.use('/api/settings', settingsRouter);
 app.use('/api/db-status', dbStatusRouter);
 
-// Error handling middleware
-app.use(errorHandler);
-
 // Serve static files in production
 if (process.env.NODE_ENV === 'production') {
   app.use(express.static(path.join(__dirname, '../../dist')));
+}
 
+// API 404 handler
+app.use('/api/*', (req, res) => {
+  res.status(404).json({ error: 'API endpoint not found' });
+});
+
+// Error handling middleware
+app.use(errorHandler);
+
+// Handle client-side routing in production
+if (process.env.NODE_ENV === 'production') {
   app.get('*', (req, res) => {
     res.sendFile(path.join(__dirname, '../../dist/index.html'));
   });
